@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Batch CSV Ingestion & Threat Analysis - FraudGuard AI{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Batch Ingestion &amp; Audit Engine</h1>
+      <p class="page-desc">Upload bulk transactional archives for parallel Rule Matrix evaluation and Isolation Forest scoring.</p>
+    </div>
+
+    <!-- Download Fraud Report -->
+    <a href="/api/download-report" class="btn btn-secondary">
+      <span>📥</span>
+      <span>Download Master Fraud Report</span>
+    </a>
+  </div>
+
+  <!-- Expected CSV Format Specification Card -->
+  <div class="card-panel" style="margin-bottom: 1.5rem; background: #172033;">
+    <div style="font-size: 0.8rem; font-weight: 700; color: #60a5fa; text-transform: uppercase; margin-bottom: 6px;">Supported Schema Definition</div>
+    <div style="font-size: 0.85rem; color: #d1d5db; margin-bottom: 8px;">
+      CSV files must contain the following header columns:
+    </div>
+    <code style="display: block; background: #0b132b; padding: 10px 12px; border: 1px solid #374151; border-radius: var(--radius-xs); font-family: var(--font-mono); font-size: 0.775rem; color: #93c5fd; overflow-x: auto;">
+      transaction_id,account_id,amount,avg_amount,location,time,new_device,transactions_10min
+    </code>
+    <div style="margin-top: 10px;">
+      <button onclick="downloadSampleCsv()" class="btn btn-secondary btn-sm">
+        📄 Download Pre-built Hackathon Test CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Drag and Drop Rectangular Dropzone (Strictly Rectangular, NO ROUNDING) -->
+  <div class="dropzone" id="dropzoneBox" onclick="document.getElementById('csvFileInput').click()">
+    <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleFileSelected(event)">
+    <div style="font-size: 2.5rem; margin-bottom: 10px;">📁</div>
+    <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 6px;">
+      Drag &amp; Drop Transactional CSV Here
+    </h3>
+    <p style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 1rem;">
+      or click to browse your local computer (.csv up to 25MB)
+    </p>
+    <button type="button" class="btn btn-primary btn-sm" style="pointer-events: none;">
+      Select File
+    </button>
+  </div>
+
+  <!-- Processing State Banner -->
+  <div id="uploadStatusBanner" style="display: none; margin-top: 1.5rem;" class="card-panel">
+    <div id="uploadStatusText" style="font-weight: 700; font-size: 1rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+      <span>⏳</span>
+      <span>Processing batch records through Hybrid Engine...</span>
+    </div>
+  </div>
+
+  <!-- Summary & Results Section -->
+  <div id="uploadResultsSection" style="display: none; margin-top: 1.5rem;">
+    
+    <div class="metric-grid">
+      <div class="metric-card risk-border-low">
+        <div class="metric-title">Rows Processed</div>
+        <div class="metric-value" id="resRowsProcessed">0</div>
+      </div>
+      <div class="metric-card risk-border-critical">
+        <div class="metric-title">Critical / High Flagged</div>
+        <div class="metric-value" id="resCriticalCount" style="color: #f87171;">0</div>
+      </div>
+      <div class="metric-card" style="border-left: 4px solid #3b82f6 !important;">
+        <div class="metric-title">Audit Log Status</div>
+        <div class="metric-value" style="color: #60a5fa; font-size: 1.3rem;">COMMITTED</div>
+      </div>
+    </div>
+
+    <div class="card-panel">
+      <div class="card-panel-header">
+        <div class="card-panel-title">
+          <span>📋</span>
+          <span>Batch Audit Preview (Top Evaluated Rows)</span>
+        </div>
+        <a href="/api/download-report" class="btn btn-primary btn-sm">Download Full Audit Report (CSV)</a>
+      </div>
+
+      <div class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Transaction ID</th>
+              <th>Account ID</th>
+              <th>Amount</th>
+              <th>Location</th>
+              <th>Hybrid Score</th>
+              <th>Classification</th>
+              <th>Primary Explainable Reason</th>
+            </tr>
+          </thead>
+          <tbody id="resTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const dropzone = document.getElementById('dropzoneBox');
+
+['dragenter', 'dragover'].forEach(name => {
+  dropzone.addEventListener(name, (e) => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+});
+
+['dragleave', 'drop'].forEach(name => {
+  dropzone.addEventListener(name, (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+  });
+});
+
+dropzone.addEventListener('drop', (e) => {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  if (files.length) {
+    uploadCsvFile(files[0]);
+  }
+});
+
+function handleFileSelected(e) {
+  if (e.target.files.length) {
+    uploadCsvFile(e.target.files[0]);
+  }
+}
+
+async function uploadCsvFile(file) {
+  const banner = document.getElementById('uploadStatusBanner');
+  const bannerText = document.getElementById('uploadStatusText');
+  const resultsSec = document.getElementById('uploadResultsSection');
+
+  banner.style.display = 'block';
+  bannerText.innerHTML = `<span>⏳</span><span>Analyzing <strong>${file.name}</strong> with Isolation Forest &amp; Rule Matrix...</span>`;
+  resultsSec.style.display = 'none';
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      bannerText.innerHTML = `<span style="color:#10b981;">✓</span><span>Successfully evaluated <strong>${data.rows_processed}</strong> records. Detected <strong>${data.high_critical_flagged}</strong> severe risk infractions!</span>`;
+      
+      document.getElementById('resRowsProcessed').textContent = data.rows_processed;
+      document.getElementById('resCriticalCount').textContent = data.high_critical_flagged;
+
+      const tbody = document.getElementById('resTableBody');
+      tbody.innerHTML = '';
+      data.records.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.className = `risk-border-${r.risk_level.toLowerCase()}`;
+        tr.innerHTML = `
+          <td style="font-weight:700; font-family:var(--font-mono); color:#fff;">${r.transaction_id}</td>
+          <td style="font-family:var(--font-mono);">${r.account_id}</td>
+          <td style="font-family:var(--font-mono); font-weight:700; color:#fff;">${formatINR(r.amount)}</td>
+          <td>📍 ${r.location}</td>
+          <td style="font-family:var(--font-mono); font-weight:700;">${r.hybrid_score} / 100</td>
+          <td><span class="risk-badge risk-badge-${r.risk_level.toLowerCase()}">${r.risk_level}</span></td>
+          <td style="font-size:0.775rem; color:#d1d5db;">${r.top_reason}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      resultsSec.style.display = 'block';
+      showNotification(`Batch processed: ${data.rows_processed} transactions evaluated.`);
+    } else {
+      bannerText.innerHTML = `<span style="color:#ef4444;">❌</span><span>Upload error: ${data.error || 'Failed to process file'}</span>`;
+    }
+  } catch (err) {
+    bannerText.innerHTML = `<span style="color:#ef4444;">❌</span><span>Server communication error.</span>`;
+  }
+}
+
+function downloadSampleCsv() {
+  const content = `transaction_id,account_id,amount,avg_amount,location,time,new_device,transactions_10min
+TXN-BATCH-001,ACC101,89000,4500,Dubai,03:15,1,8
+TXN-BATCH-002,ACC102,1200,3800,Coimbatore,14:22,0,1
+TXN-BATCH-003,ACC103,45000,15000,Mumbai,02:10,1,6
+TXN-BATCH-004,ACC104,800,6200,Bengaluru,11:45,0,1
+TXN-BATCH-005,ACC105,95000,8500,London,04:05,1,9
+TXN-BATCH-006,ACC106,2400,5100,Chennai,16:30,0,1
+TXN-BATCH-007,ACC107,3500,28000,Mumbai,18:20,0,2
+TXN-BATCH-008,ACC108,72000,4200,Singapore,01:45,1,7
+TXN-BATCH-009,ACC109,650,3100,Erode,09:15,0,1
+TXN-BATCH-010,ACC110,4800,5500,Erode,13:50,0,1`;
+
+  const blob = new Blob([content], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('href', url);
+  a.setAttribute('download', 'fraudguard_sample_test_batch.csv');
+  a.click();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions Ledger - FraudGuard AI{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Real-Time Transactions Ledger</h1>
+      <p class="page-desc">Comprehensive log of domestic UPI, IMPS, NEFT, and international transactions evaluated through the hybrid engine.</p>
+    </div>
+
+    <!-- Download CSV Report Button -->
+    <a href="/api/download-report" class="btn btn-secondary">
+      <span>📥</span>
+      <span>Download Audit CSV Report</span>
+    </a>
+  </div>
+
+  <!-- Filter & Search Bar (Strictly Rectangular, NO ROUNDING) -->
+  <div class="card-panel" style="margin-bottom: 1.5rem; padding: 1rem;">
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+      <div style="flex: 1; min-width: 260px;">
+        <input type="text" id="txnSearchInput" class="search-input" placeholder="Search by Transaction ID, Account ID, Customer Name, or City..." oninput="filterTransactions()">
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button onclick="setRiskFilter('', this)" class="btn btn-secondary btn-sm active-filter">All</button>
+        <button onclick="setRiskFilter('LOW', this)" class="btn btn-secondary btn-sm" style="border-left: 3px solid var(--risk-low);">Low</button>
+        <button onclick="setRiskFilter('MEDIUM', this)" class="btn btn-secondary btn-sm" style="border-left: 3px solid var(--risk-medium);">Medium</button>
+        <button onclick="setRiskFilter('HIGH', this)" class="btn btn-secondary btn-sm" style="border-left: 3px solid var(--risk-high);">High</button>
+        <button onclick="setRiskFilter('CRITICAL', this)" class="btn btn-secondary btn-sm" style="border-left: 3px solid var(--risk-critical);">Critical</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transactions Table -->
+  <div class="card-panel">
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Transaction ID</th>
+            <th>Customer &amp; Account</th>
+            <th>Amount (INR)</th>
+            <th>Location</th>
+            <th>Channel / Merchant</th>
+            <th>Risk Score</th>
+            <th>Top XAI Reason</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="txnTableBody">
+          <tr><td colspan="8" style="text-align: center; padding: 2rem; color: #9ca3af;">Loading transactions...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allTransactions = [];
+let currentRisk = '';
+
+async function loadTransactions() {
+  try {
+    const res = await fetch('/api/transactions?limit=150');
+    const data = await res.json();
+    allTransactions = data.transactions || [];
+    renderTable();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function setRiskFilter(risk, btn) {
+  currentRisk = risk;
+  document.querySelectorAll('.btn-sm').forEach(b => b.style.opacity = '0.7');
+  if (btn) btn.style.opacity = '1.0';
+  renderTable();
+}
+
+function filterTransactions() {
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('txnTableBody');
+  const search = document.getElementById('txnSearchInput').value.toLowerCase().trim();
+
+  let filtered = allTransactions.filter(t => {
+    const matchesRisk = !currentRisk || t.risk_level === currentRisk;
+    const matchesSearch = !search ||
+      t.transaction_id.toLowerCase().includes(search) ||
+      t.account_id.toLowerCase().includes(search) ||
+      t.holder_name.toLowerCase().includes(search) ||
+      t.location.toLowerCase().includes(search);
+    return matchesRisk && matchesSearch;
+  });
+
+  tbody.innerHTML = '';
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 2rem; color: #6b7280;">No transactions matched your filters.</td></tr>';
+    return;
+  }
+
+  filtered.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.className = `risk-border-${t.risk_level.toLowerCase()}`;
+
+    const badgeClass = `risk-badge-${t.risk_level.toLowerCase()}`;
+    const primaryReason = (t.xai_reasons && t.xai_reasons.length > 0) ? t.xai_reasons[0] : 'Normal clearance verified.';
+
+    tr.innerHTML = `
+      <td>
+        <div style="font-weight: 700; font-family: var(--font-mono); color: #fff;">${t.transaction_id}</div>
+        <div style="font-size: 0.725rem; color: #9ca3af;">${t.timestamp}</div>
+      </td>
+      <td>
+        <div style="font-weight: 600;">${t.holder_name}</div>
+        <div style="font-size: 0.75rem; color: #6b7280; font-family: var(--font-mono);">${t.account_id}</div>
+      </td>
+      <td style="font-weight: 700; font-family: var(--font-mono); color: #fff;">
+        ${formatINR(t.amount)}
+      </td>
+      <td>
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span>📍</span>
+          <span>${t.location}</span>
+        </div>
+      </td>
+      <td>
+        <div style="font-weight: 600; font-size: 0.8rem;">${t.merchant}</div>
+        <div style="font-size: 0.725rem; color: #9ca3af;">${t.channel}</div>
+      </td>
+      <td>
+        <span class="risk-badge ${badgeClass}">${t.risk_level} (${t.hybrid_score})</span>
+      </td>
+      <td style="max-width: 280px; font-size: 0.775rem; color: #d1d5db; line-height: 1.3;">
+        ${primaryReason}
+      </td>
+      <td>
+        <a href="/transactions/${t.transaction_id}" class="btn btn-secondary btn-sm" style="text-decoration:none;">Inspect XAI</a>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', loadTransactions);
+</script>
+{% endblock %}

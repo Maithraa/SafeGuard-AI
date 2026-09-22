@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}FraudGuard AI - Next-Gen Financial Fraud Detection Engine{% endblock %}
+
+{% block content %}
+<!-- 1. LANDING HERO SECTION (Deep Navy #0b132b & Dark Purple #1c1135 Gradient) -->
+<section style="background: linear-gradient(135deg, #0b132b 0%, #1c1135 100%); padding: 5rem 2rem; border-bottom: 1px solid #374151;">
+  <div style="max-width: 1320px; margin: 0 auto; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 3rem; align-items: center;">
+    
+    <!-- Hero Left: Typography & CTAs -->
+    <div>
+      <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: var(--radius-xs); padding: 5px 12px; margin-bottom: 1.5rem;">
+        <span style="display: inline-block; width: 6px; height: 6px; background: #60a5fa; border-radius: 1px;"></span>
+        <span style="font-size: 0.775rem; font-weight: 700; color: #93c5fd; letter-spacing: 0.5px; text-transform: uppercase;">Next-Gen Isolation Forest & Hybrid XAI</span>
+      </div>
+
+      <h1 style="font-size: 3.2rem; font-weight: 800; line-height: 1.15; color: #ffffff; letter-spacing: -1px; margin-bottom: 1.25rem;">
+        Autonomous Fraud Interception in <span style="color: #60a5fa; text-decoration: underline; text-decoration-color: #2563eb;">Real-Time</span>
+      </h1>
+
+      <p style="font-size: 1.1rem; color: #d1d5db; line-height: 1.6; margin-bottom: 2.25rem; max-width: 580px;">
+        Protecting enterprise financial rails across UPI, IMPS, and Core Banking. Combining deterministic rule telemetry with unsupervised scikit-learn anomaly scoring to thwart mule networks and velocity exploits.
+      </p>
+
+      <!-- Primary Rectangular CTAs (Strictly 4-8px radius, NO CAPSULES) -->
+      <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+        <a href="/dashboard" class="btn btn-primary" style="padding: 12px 24px; font-size: 1rem; border-radius: var(--radius-md);">
+          Explore Dashboard →
+        </a>
+        <a href="#how-it-works" class="btn btn-secondary" style="padding: 12px 24px; font-size: 1rem; border-radius: var(--radius-md);">
+          See How It Works
+        </a>
+      </div>
+
+      <!-- Trust Metrics -->
+      <div style="margin-top: 3rem; display: flex; gap: 2.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 1.5rem;">
+        <div>
+          <div style="font-size: 1.6rem; font-weight: 800; color: #ffffff; font-family: var(--font-mono);">₹8.45 Cr</div>
+          <div style="font-size: 0.775rem; color: #9ca3af; text-transform: uppercase;">Volume Monitored</div>
+        </div>
+        <div>
+          <div style="font-size: 1.6rem; font-weight: 800; color: #34d399; font-family: var(--font-mono);">&lt; 12ms</div>
+          <div style="font-size: 0.775rem; color: #9ca3af; text-transform: uppercase;">Decision Latency</div>
+        </div>
+        <div>
+          <div style="font-size: 1.6rem; font-weight: 800; color: #60a5fa; font-family: var(--font-mono);">99.4%</div>
+          <div style="font-size: 0.775rem; color: #9ca3af; text-transform: uppercase;">Precision Recall</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Right: Custom Abstract Interactive SVG/CSS Data Flow -->
+    <div>
+      <div class="data-flow-container">
+        <div style="font-size: 0.8rem; font-weight: 700; color: #93c5fd; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+          <span>Pipeline Telemetry Architecture</span>
+          <span style="color: #34d399; font-family: var(--font-mono);">STREAM ACTIVE</span>
+        </div>
+
+        <!-- Pipeline Nodes -->
+        <div style="display: flex; flex-direction: column; gap: 14px; position: relative;">
+          
+          <!-- Step 1: Ingestion -->
+          <div class="flow-step-box" style="border-left: 4px solid #3b82f6; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.725rem; color: #60a5fa; font-weight: 700;">STAGE 1: TELEMETRY INGESTION</div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: #fff;">Transaction Stream (UPI / IMPS)</div>
+              <div style="font-size: 0.775rem; color: #9ca3af;">Amount: ₹85,000 | Location: Dubai | Velocity: 2,850 km/h</div>
+            </div>
+            <div style="background: #1e3a8a; color: #bfdbfe; font-size: 0.7rem; padding: 3px 8px; border-radius: var(--radius-xs); font-family: var(--font-mono);">1.2ms</div>
+          </div>
+
+          <!-- Connecting Arrow -->
+          <div style="text-align: center; color: #60a5fa; font-size: 0.9rem; line-height: 1;">↓</div>
+
+          <!-- Step 2: Analysis Engine -->
+          <div class="flow-step-box" style="border-left: 4px solid #f59e0b; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.725rem; color: #fbbf24; font-weight: 700;">STAGE 2: DUAL ANALYSIS ENGINE</div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: #fff;">Deterministic Rules + Isolation Forest</div>
+              <div style="font-size: 0.775rem; color: #9ca3af;">8-Vector Matrix Evaluation + Latent Space Outlier Detection</div>
+            </div>
+            <div style="background: #78350f; color: #fde68a; font-size: 0.7rem; padding: 3px 8px; border-radius: var(--radius-xs); font-family: var(--font-mono);">4.8ms</div>
+          </div>
+
+          <!-- Connecting Arrow -->
+          <div style="text-align: center; color: #f59e0b; font-size: 0.9rem; line-height: 1;">↓</div>
+
+          <!-- Step 3: Hybrid Scoring -->
+          <div class="flow-step-box" style="border-left: 4px solid #f97316; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.725rem; color: #fb923c; font-weight: 700;">STAGE 3: HYBRID SCORING & XAI</div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: #fff;">Score: 92.4 / 100 [CRITICAL THREAT]</div>
+              <div style="font-size: 0.775rem; color: #9ca3af;">0.6×Rule (85) + 0.4×ML (94) | 4 Root-Cause Explanations</div>
+            </div>
+            <div style="background: #7c2d12; color: #fed7aa; font-size: 0.7rem; padding: 3px 8px; border-radius: var(--radius-xs); font-family: var(--font-mono);">2.1ms</div>
+          </div>
+
+          <!-- Connecting Arrow -->
+          <div style="text-align: center; color: #dc2626; font-size: 0.9rem; line-height: 1;">↓</div>
+
+          <!-- Step 4: Action Trigger -->
+          <div class="flow-step-box" style="border-left: 4px solid #dc2626; text-align: left; background: #231219; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.725rem; color: #f87171; font-weight: 700;">STAGE 4: AUTONOMOUS MITIGATION</div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: #fff;">Automated Freeze & SOC Dispatch</div>
+              <div style="font-size: 0.775rem; color: #9ca3af;">Core Banking lock engaged. Outbound UPI revoked.</div>
+            </div>
+            <span class="risk-badge risk-badge-critical">ENGAGED</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 2. NARRATIVE / HOW IT WORKS SECTION (Light Warm Cream / Off-White #f8f9fa / #f3f4f6) -->
+<section id="how-it-works" style="background: #f8f9fa; color: #111827; padding: 4.5rem 2rem; border-bottom: 1px solid #e5e7eb;">
+  <div style="max-width: 1200px; margin: 0 auto;">
+    
+    <div style="text-align: center; margin-bottom: 3.5rem;">
+      <div style="font-size: 0.8rem; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">How It Works</div>
+      <h2 style="font-size: 2.3rem; font-weight: 800; color: #0b132b; letter-spacing: -0.5px;">The Hybrid Fraud Scoring Architecture</h2>
+      <p style="font-size: 1rem; color: #4b5563; max-width: 650px; margin: 10px auto 0;">
+        Why single-model AI fails in production: Machine learning alone produces false positives without explainability. Deterministic rules alone can be bypassed. FraudGuard combines both.
+      </p>
+    </div>
+
+    <!-- 3 Step Cards (Strict Rectangular, Light Theme, 6px radius) -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+      
+      <!-- Card 1 -->
+      <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: var(--radius-md); padding: 2rem; border-top: 4px solid #2563eb;">
+        <div style="font-size: 1.4rem; font-weight: 800; color: #2563eb; font-family: var(--font-mono); margin-bottom: 12px;">01. Rule Matrix</div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; color: #111827;">Deterministic Guardrails</h3>
+        <p style="font-size: 0.9rem; color: #4b5563; line-height: 1.6;">
+          Calculates hard point penalties for impossible transit velocity (&gt;800 km/h), sudden 5x amount surges, off-hours execution (12 AM–5 AM), and rapid bursts (&gt;5 in 10 mins).
+        </p>
+      </div>
+
+      <!-- Card 2 -->
+      <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: var(--radius-md); padding: 2rem; border-top: 4px solid #0d9488;">
+        <div style="font-size: 1.4rem; font-weight: 800; color: #0d9488; font-family: var(--font-mono); margin-bottom: 12px;">02. Isolation Forest</div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; color: #111827;">Unsupervised ML Outliers</h3>
+        <p style="font-size: 0.9rem; color: #4b5563; line-height: 1.6;">
+          Scikit-learn Isolation Forest standardizes 8 behavioral features, evaluating latent coordinates to uncover sophisticated fraud vectors that slip past simple boundary thresholds.
+        </p>
+      </div>
+
+      <!-- Card 3 -->
+      <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: var(--radius-md); padding: 2rem; border-top: 4px solid #dc2626;">
+        <div style="font-size: 1.4rem; font-weight: 800; color: #dc2626; font-family: var(--font-mono); margin-bottom: 12px;">03. Explainable AI</div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; color: #111827;">Root-Cause XAI Reasoning</h3>
+        <p style="font-size: 0.9rem; color: #4b5563; line-height: 1.6;">
+          Never leaves analysts guessing. Every flagged transaction returns 3 to 5 exact human-readable reasons explaining why it was flagged, with exact multiples, velocities, and city hops.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- 3. ANALYTICAL CALLOUT (Dark Navy #111827 with Slate Blue Panels #1f2937) -->
+<section style="background: #111827; padding: 4.5rem 2rem;">
+  <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; text-align: center;">
+    
+    <div style="max-width: 720px; margin-bottom: 2rem;">
+      <h2 style="font-size: 2.2rem; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; margin-bottom: 1rem;">
+        Engineered for Live FinTech Hackathon Demos
+      </h2>
+      <p style="color: #9ca3af; font-size: 1rem; line-height: 1.6;">
+        Test real-time simulation with 1-click execution, view interactive mule money laundering loops on HTML5 canvas, or drop batch CSV transactions.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 14px;">
+      <a href="/dashboard" class="btn btn-primary" style="padding: 12px 24px; font-size: 1rem; border-radius: var(--radius-md);">
+        Open Live Dashboard
+      </a>
+      <a href="/login" class="btn btn-secondary" style="padding: 12px 24px; font-size: 1rem; border-radius: var(--radius-md);">
+        Analyst Sign In
+      </a>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

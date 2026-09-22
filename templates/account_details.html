@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Account Dossier - {{ account_id }}{% endblock %}
+
+{% block content %}
+<div class="page-container" id="accountDetailsContainer">
+  <div style="text-align: center; padding: 4rem; color: #9ca3af;">
+    Loading Account Dossier for {{ account_id }}...
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const accId = "{{ account_id }}";
+
+async function loadAccountDetails() {
+  const container = document.getElementById('accountDetailsContainer');
+  try {
+    const res = await fetch(`/api/accounts/${accId}`);
+    if (!res.ok) {
+      container.innerHTML = '<div class="card-panel"><h3>Account Not Found</h3><a href="/accounts" class="btn btn-secondary">← Back to Accounts</a></div>';
+      return;
+    }
+    const data = await res.json();
+    const acc = data.account;
+    const txns = data.transactions;
+    const mules = data.mule_links;
+
+    container.innerHTML = `
+      <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <a href="/accounts" class="btn btn-secondary btn-sm">← Back to Accounts</a>
+        <div style="display:flex; gap:8px;">
+          <button onclick="quickFreezeAccount('${acc.account_id}', this)" class="btn btn-danger btn-sm" ${acc.status === 'Frozen' ? 'disabled' : ''}>
+            ${acc.status === 'Frozen' ? 'Account Frozen 🔒' : 'Freeze Entire Account'}
+          </button>
+        </div>
+      </div>
+
+      <!-- Account Summary Card -->
+      <div class="card-panel" style="margin-bottom: 1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+              <h1 style="font-size: 1.6rem; font-weight: 800; color: #fff;">${acc.holder_name}</h1>
+              <span class="risk-badge ${acc.status === 'Frozen' ? 'risk-badge-critical' : 'risk-badge-low'}">${acc.status}</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #9ca3af; font-family: var(--font-mono);">
+              Account ID: ${acc.account_id} | Type: ${acc.account_type} | KYC Location: 📍 ${acc.typical_location}
+            </div>
+          </div>
+
+          <div style="display:flex; gap:2rem;">
+            <div>
+              <div style="font-size:0.75rem; color:#9ca3af; text-transform:uppercase;">Ledger Balance</div>
+              <div style="font-size:1.8rem; font-weight:800; color:#fff; font-family:var(--font-mono);">${formatINR(acc.balance)}</div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; color:#9ca3af; text-transform:uppercase;">Baseline Mean</div>
+              <div style="font-size:1.8rem; font-weight:800; color:#60a5fa; font-family:var(--font-mono);">${formatINR(acc.avg_amount)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mule Network Ties (If any) -->
+      ${mules && mules.length > 0 ? `
+        <div class="card-panel risk-border-critical" style="margin-bottom: 1.5rem;">
+          <div class="card-panel-header">
+            <div class="card-panel-title">
+              <span style="color:#ef4444;">🕸️</span>
+              <span>Identified Rapid Mule Network Transfer Links</span>
+            </div>
+            <span class="risk-badge risk-badge-critical">CIRCULAR WASHBACK DETECTED</span>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${mules.map(m => `
+              <div style="background:#172033; padding:10px 14px; border:1px solid #374151; border-radius:var(--radius-xs); display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <span style="font-family:var(--font-mono); font-weight:700; color:#fff;">${m.source}</span>
+                  <span style="color:#f87171; margin:0 8px;">➔</span>
+                  <span style="font-family:var(--font-mono); font-weight:700; color:#fff;">${m.target}</span>
+                  <div style="font-size:0.75rem; color:#9ca3af; margin-top:2px;">${m.pattern} | Velocity: ${m.velocity_seconds} seconds</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-weight:700; font-family:var(--font-mono); color:#fff;">${formatINR(m.amount)}</div>
+                  <span class="risk-badge risk-badge-critical">RAPID HOP</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Account Transactions History -->
+      <div class="card-panel">
+        <div class="card-panel-header">
+          <div class="card-panel-title">
+            <span>📜</span>
+            <span>Historical Transaction Log (${txns.length} Records)</span>
+          </div>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>Timestamp</th>
+                <th>Amount</th>
+                <th>Origin Location</th>
+                <th>Channel / Merchant</th>
+                <th>Risk Tier</th>
+                <th>Reason Summary</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${txns.map(t => `
+                <tr class="risk-border-${t.risk_level.toLowerCase()}">
+                  <td style="font-weight:700; font-family:var(--font-mono); color:#fff;">${t.transaction_id}</td>
+                  <td style="font-size:0.75rem; color:#9ca3af;">${t.timestamp}</td>
+                  <td style="font-weight:700; font-family:var(--font-mono); color:#fff;">${formatINR(t.amount)}</td>
+                  <td>📍 ${t.location}</td>
+                  <td>${t.merchant} (${t.channel})</td>
+                  <td><span class="risk-badge risk-badge-${t.risk_level.toLowerCase()}">${t.risk_level} (${t.hybrid_score})</span></td>
+                  <td style="font-size:0.775rem; color:#d1d5db; max-width:240px;">${t.xai_reason}</td>
+                  <td><a href="/transactions/${t.transaction_id}" class="btn btn-secondary btn-sm">Inspect</a></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadAccountDetails);
+</script>
+{% endblock %}

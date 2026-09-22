@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}SOC Dashboard - FraudGuard AI Risk Operations{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+  <!-- 1. Top Bar & Live Demo Hero CTA -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Operational Risk Telemetry</h1>
+      <p class="page-desc">Real-time supervision across core banking, UPI settlement rails, and automated threat mitigation.</p>
+    </div>
+
+    <!-- Prominent Rectangular Hero Simulation Button (NO CAPSULES, 6px radius) -->
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <button id="btnSimulateLive" onclick="triggerSimulation()" class="btn btn-hero-simulate">
+        <span style="display: inline-block; width: 8px; height: 8px; background: #ffffff; border-radius: 1px; animation: pulse 1s infinite;"></span>
+        <span>⚡ Simulate Live Transaction</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. Security Overview Banner (Metric Grid with 4px left accent borders) -->
+  <div class="metric-grid">
+    <div class="metric-card risk-border-low">
+      <div class="metric-title">Transactions Analyzed</div>
+      <div class="metric-value" id="statTotalAnalyzed">12,540</div>
+      <div class="metric-sub">▲ 14.2% from prior 24h</div>
+    </div>
+
+    <div class="metric-card risk-border-medium">
+      <div class="metric-title">Suspicious Incursions</div>
+      <div class="metric-value" id="statSuspicious" style="color: #fbbf24;">420</div>
+      <div class="metric-sub">Score threshold &gt; 60.0</div>
+    </div>
+
+    <div class="metric-card risk-border-critical">
+      <div class="metric-title">Critical Threats</div>
+      <div class="metric-value" id="statCritical" style="color: #f87171;">200</div>
+      <div class="metric-sub">Automatic freeze triggered</div>
+    </div>
+
+    <div class="metric-card" style="border-left: 4px solid #3b82f6 !important;">
+      <div class="metric-title">Analyzed Volume</div>
+      <div class="metric-value" id="statVolume">₹8.45 Cr</div>
+      <div class="metric-sub">Settled &amp; in-flight</div>
+    </div>
+
+    <div class="metric-card" style="border-left: 4px solid #0d9488 !important;">
+      <div class="metric-title">Anomaly Rate</div>
+      <div class="metric-value" id="statAnomalyRate" style="color: #2dd4bf;">3.2%</div>
+      <div class="metric-sub">Across 8 behavioral vectors</div>
+    </div>
+  </div>
+
+  <!-- 3. Two-Column Analytical Section -->
+  <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+    
+    <!-- Left: Risk Overview Doughnut Chart -->
+    <div class="card-panel">
+      <div class="card-panel-header">
+        <div class="card-panel-title">
+          <span>📊</span>
+          <span>Risk Distribution Matrix</span>
+        </div>
+        <span style="font-size: 0.75rem; color: #9ca3af; font-family: var(--font-mono);">ISOLATION FOREST + RULES</span>
+      </div>
+
+      <div style="display: flex; gap: 1.5rem; align-items: center; height: 220px;">
+        <!-- Chart Canvas -->
+        <div style="position: relative; width: 180px; height: 180px; flex-shrink: 0;">
+          <canvas id="riskDoughnutCanvas"></canvas>
+        </div>
+
+        <!-- Rectangular Breakdown Badges (NO CAPSULES, 4px radius) -->
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+          <div style="display: flex; justify-content: space-between; align-items: center; background: #172033; padding: 6px 10px; border-radius: var(--radius-xs); border-left: 4px solid var(--risk-low);">
+            <span style="font-size: 0.8rem; font-weight: 600;">Low Risk (0–30)</span>
+            <span class="risk-badge risk-badge-low" id="badgeCountLow">38</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; background: #172033; padding: 6px 10px; border-radius: var(--radius-xs); border-left: 4px solid var(--risk-medium);">
+            <span style="font-size: 0.8rem; font-weight: 600;">Medium Risk (31–60)</span>
+            <span class="risk-badge risk-badge-medium" id="badgeCountMed">8</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; background: #172033; padding: 6px 10px; border-radius: var(--radius-xs); border-left: 4px solid var(--risk-high);">
+            <span style="font-size: 0.8rem; font-weight: 600;">High Risk (61–80)</span>
+            <span class="risk-badge risk-badge-high" id="badgeCountHigh">5</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; background: #172033; padding: 6px 10px; border-radius: var(--radius-xs); border-left: 4px solid var(--risk-critical);">
+            <span style="font-size: 0.8rem; font-weight: 600;">Critical Threat (81–100)</span>
+            <span class="risk-badge risk-badge-critical" id="badgeCountCrit">4</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Impossible Velocity & Geo-Map Visual Block -->
+    <div class="card-panel" style="border-left: 4px solid var(--risk-critical) !important;">
+      <div class="card-panel-header">
+        <div class="card-panel-title">
+          <span style="color: #f87171;">⚠️</span>
+          <span>Localized Impossible Velocity Incursion</span>
+        </div>
+        <span class="risk-badge risk-badge-critical">CRITICAL GEO-ALERT</span>
+      </div>
+
+      <div style="background: #172033; border: 1px solid #374151; border-radius: var(--radius-xs); padding: 1rem; margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div style="font-weight: 700; color: #ffffff; font-size: 0.95rem;">
+            Erode, Tamil Nadu ➔ Dubai, UAE Gateway
+          </div>
+          <div style="font-family: var(--font-mono); font-size: 0.85rem; color: #f87171; font-weight: 700;">
+            2,840 km/h [IMPOSSIBLE]
+          </div>
+        </div>
+        <div style="font-size: 0.825rem; color: #9ca3af; line-height: 1.4;">
+          Account <strong>ACC101</strong> (Karthik Natarajan) initiated a ₹450 domestic grocery payment in <strong>Erode</strong> at 02:30 AM, followed by a ₹85,000 diamond purchase in <strong>Dubai</strong> at 03:15 AM (45 min interval).
+        </div>
+      </div>
+
+      <!-- Threat Vector Telemetry Rows -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="background: #111827; padding: 10px; border: 1px solid #374151; border-radius: var(--radius-xs);">
+          <div style="font-size: 0.725rem; color: #9ca3af; text-transform: uppercase;">Origin Device</div>
+          <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">DEV-IPHONE-DUB-9X</div>
+          <div style="font-size: 0.725rem; color: #f87171;">Unrecognized Hardware</div>
+        </div>
+
+        <div style="background: #111827; padding: 10px; border: 1px solid #374151; border-radius: var(--radius-xs);">
+          <div style="font-size: 0.725rem; color: #9ca3af; text-transform: uppercase;">MFA Challenge</div>
+          <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">Bypassed via SIM Swap</div>
+          <div style="font-size: 0.725rem; color: #f87171;">Telecom Alert Signal</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- 4. Transaction Activity Section (Full-width Line Chart comparing Normal vs Suspicious) -->
+  <div class="card-panel" style="margin-bottom: 1.5rem;">
+    <div class="card-panel-header">
+      <div class="card-panel-title">
+        <span>📈</span>
+        <span>Hourly Transaction Activity &amp; Incursion Volume (24h)</span>
+      </div>
+      <div style="font-size: 0.75rem; color: #9ca3af;">Blue: Normal Volume | Red: Suspicious Anomalies</div>
+    </div>
+    <div style="height: 250px; position: relative;">
+      <canvas id="hourlyActivityCanvas"></canvas>
+    </div>
+  </div>
+
+  <!-- 5. Recent Suspicious Activity Table (4px left border risk indicators) -->
+  <div class="card-panel">
+    <div class="card-panel-header">
+      <div class="card-panel-title">
+        <span>🚨</span>
+        <span>Recent High &amp; Critical Incursions Requiring Action</span>
+      </div>
+      <a href="/transactions" class="btn btn-secondary btn-sm">View All Transactions →</a>
+    </div>
+
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Transaction ID / Time</th>
+            <th>Account / Holder</th>
+            <th>Amount (₹)</th>
+            <th>Location</th>
+            <th>Risk Tier</th>
+            <th>Explainable AI Reason</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="recentSuspiciousTbody">
+          <!-- Populated dynamically via JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- 6. Simulation Result Modal (Sharp Rectangular, 8px radius) -->
+<div class="modal-overlay" id="simulationModal">
+  <div class="modal-box">
+    
+    <div class="modal-header">
+      <div class="modal-title">
+        <span style="color: #ef4444;">⚡</span>
+        <span>Live Threat Intercepted: <span id="simModalTxnId" style="font-family: var(--font-mono);">TXN-SIM-00000</span></span>
+      </div>
+      <button class="modal-close-btn" onclick="closeModal('simulationModal')">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      
+      <!-- Key metrics bar -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem;">
+        <div style="background: #172033; padding: 10px; border-radius: var(--radius-xs); border: 1px solid #374151;">
+          <div style="font-size: 0.725rem; color: #9ca3af; text-transform: uppercase;">Amount Intercepted</div>
+          <div id="simModalAmount" style="font-size: 1.25rem; font-weight: 800; color: #fff; font-family: var(--font-mono);">₹85,000</div>
+        </div>
+
+        <div style="background: #172033; padding: 10px; border-radius: var(--radius-xs); border: 1px solid #374151;">
+          <div style="font-size: 0.725rem; color: #9ca3af; text-transform: uppercase;">Location / Transit</div>
+          <div id="simModalLocation" style="font-size: 0.9rem; font-weight: 700; color: #f87171;">Dubai (from Erode)</div>
+          <div id="simModalVelocity" style="font-size: 0.7rem; color: #9ca3af;">2,850 km/h</div>
+        </div>
+
+        <div style="background: #172033; padding: 10px; border-radius: var(--radius-xs); border: 1px solid #374151;">
+          <div style="font-size: 0.725rem; color: #9ca3af; text-transform: uppercase;">Hybrid Risk Score</div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="simModalScore" style="font-size: 1.25rem; font-weight: 800; color: #ef4444; font-family: var(--font-mono);">94.0 / 100</span>
+            <span id="simModalRiskBadge" class="risk-badge risk-badge-critical">CRITICAL</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Solid Rectangular Progress Bar -->
+      <div style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #9ca3af; margin-bottom: 6px;">
+          <span>Risk Index Rating</span>
+          <span>94.0%</span>
+        </div>
+        <div class="progress-bar-container">
+          <div id="simModalProgressBar" class="progress-bar-fill" style="width: 94%; background: #dc2626;"></div>
+        </div>
+      </div>
+
+      <!-- "Why Was This Transaction Flagged?" Section -->
+      <div>
+        <div style="font-size: 0.85rem; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+          <span>🛡️</span>
+          <span>Explainable AI (XAI) Root Cause Diagnosis</span>
+        </div>
+        
+        <div id="simModalXaiReasons">
+          <!-- Stacked alert rows populated dynamically -->
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <a href="#" id="simModalDeepLink" class="btn btn-secondary" style="text-decoration:none;">Inspect Full XAI Dossier</a>
+      <button onclick="closeModal('simulationModal')" class="btn btn-primary">Acknowledge &amp; Dispatch</button>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initDashboard();
+});
+</script>
+{% endblock %}

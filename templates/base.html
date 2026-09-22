@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}FraudGuard AI - Enterprise Fraud Intelligence{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Navigation (Strict Rectangular, Dark Navy) -->
+  <header class="top-navbar">
+    <a href="/" class="navbar-brand-logo">
+      <span class="logo-shield">FG</span>
+      <span>FraudGuard <span style="color: #3b82f6;">AI</span></span>
+    </a>
+
+    <nav>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">Home</a></li>
+        <li><a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">Dashboard</a></li>
+        <li><a href="/transactions" class="nav-link {% if request.path == '/transactions' %}active{% endif %}">Transactions</a></li>
+        <li><a href="/accounts" class="nav-link {% if request.path == '/accounts' %}active{% endif %}">Accounts</a></li>
+        <li><a href="/analytics" class="nav-link {% if request.path == '/analytics' %}active{% endif %}">Mule Network</a></li>
+        <li><a href="/alerts" class="nav-link {% if request.path == '/alerts' %}active{% endif %}">Alerts</a></li>
+        <li><a href="/upload" class="nav-link {% if request.path == '/upload' %}active{% endif %}">Batch CSV</a></li>
+        <li><a href="/settings" class="nav-link {% if request.path == '/settings' %}active{% endif %}">Settings</a></li>
+      </ul>
+    </nav>
+
+    <div class="nav-actions">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #9ca3af; background: #172033; padding: 4px 10px; border: 1px solid #374151; border-radius: var(--radius-xs);">
+        <span style="display: inline-block; width: 8px; height: 8px; background: #10b981; border-radius: 1px;"></span>
+        <span>AI Engine: <strong>ACTIVE</strong></span>
+      </div>
+      <a href="/login" class="btn btn-secondary btn-sm">Login</a>
+    </div>
+  </header>
+
+  <!-- Main Content Body -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="/static/js/app.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

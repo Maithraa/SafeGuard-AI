@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}XAI Transaction Audit - {{ txn_id }}{% endblock %}
+
+{% block content %}
+<div class="page-container" id="txnDetailsContainer">
+  <div style="text-align: center; padding: 4rem; color: #9ca3af;">
+    Loading Explainable AI dossier for {{ txn_id }}...
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const txnId = "{{ txn_id }}";
+
+async function loadDetails() {
+  const container = document.getElementById('txnDetailsContainer');
+  try {
+    const res = await fetch(`/api/transactions/${txnId}`);
+    if (!res.ok) {
+      container.innerHTML = '<div class="card-panel" style="text-align:center; padding: 3rem;"><h3>Transaction Not Found</h3><a href="/transactions" class="btn btn-secondary" style="margin-top:1rem;">← Return to Ledger</a></div>';
+      return;
+    }
+    const data = await res.json();
+    const t = data.transaction;
+    const a = data.analysis;
+
+    const normalMax = Math.round(t.avg_amount * 1.5);
+    const normalMin = Math.round(t.avg_amount * 0.2);
+
+    container.innerHTML = `
+      <!-- Back button & Top bar -->
+      <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <a href="/transactions" class="btn btn-secondary btn-sm">← Back to Transactions</a>
+        <div style="display:flex; gap: 8px;">
+          <button onclick="quickFreezeAccount('${t.account_id}', this)" class="btn btn-danger btn-sm">Freeze Account (${t.account_id})</button>
+          <a href="/accounts/${t.account_id}" class="btn btn-secondary btn-sm">View Account Dossier</a>
+        </div>
+      </div>
+
+      <!-- Transaction Overview Card -->
+      <div class="card-panel risk-border-${a.risk_level.toLowerCase()}" style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+              <h1 style="font-size: 1.75rem; font-weight: 800; font-family: var(--font-mono); color: #fff;">${t.transaction_id}</h1>
+              <span class="risk-badge risk-badge-${a.risk_level.toLowerCase()}">${a.risk_level} RISK</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #9ca3af;">
+              Executed at <strong>${t.timestamp}</strong> via <strong>${t.channel}</strong> | Channel Merchant: <strong>${t.merchant}</strong>
+            </div>
+          </div>
+
+          <div style="text-align: right;">
+            <div style="font-size: 0.75rem; color: #9ca3af; text-transform: uppercase;">Amount Intercepted</div>
+            <div style="font-size: 2.2rem; font-weight: 900; color: #fff; font-family: var(--font-mono);">${formatINR(t.amount)}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Risk Score & Solid Rectangular Progress Bar -->
+      <div class="card-panel" style="margin-bottom: 1.5rem;">
+        <div class="card-panel-header">
+          <div class="card-panel-title">
+            <span>🎯</span>
+            <span>Hybrid Risk Index: ${a.hybrid_score} / 100</span>
+          </div>
+          <div style="font-size: 0.75rem; color: #9ca3af; font-family: var(--font-mono);">
+            0.6 × Rule (${a.rule_score}) + 0.4 × ML (${a.ml_score})
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <div class="progress-bar-container" style="height: 16px;">
+            <div class="progress-bar-fill" style="width: ${a.hybrid_score}%; background-color: ${a.color_code};"></div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div style="background: #172033; padding: 12px; border-radius: var(--radius-xs); border: 1px solid #374151;">
+            <div style="font-size: 0.725rem; color: #9ca3af; text-transform: uppercase;">Deterministic Rule Score</div>
+            <div style="font-size: 1.3rem; font-weight: 800; color: #fff; font-family: var(--font-mono);">${a.rule_score} / 100</div>
+            <div style="font-size: 0.75rem; color: #9ca3af;">Calculated from hard financial boundaries &amp; speed checks</div>
+          </div>
+
+          <div style="background: #172033; padding: 12px; border-radius: var(--radius-xs); border: 1px solid #374151;">
+            <div style="font-size: 0.725rem; color: #9ca3af; text-transform: uppercase;">Isolation Forest ML Anomaly Score</div>
+            <div style="font-size: 1.3rem; font-weight: 800; color: #fff; font-family: var(--font-mono);">${a.ml_score} / 100</div>
+            <div style="font-size: 0.75rem; color: #9ca3af;">Normalized multi-dimensional outlier probability</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-Column: Why Flagged (XAI) vs Account Profile Snapshot -->
+      <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 1.5rem;">
+        
+        <!-- Left: Why Was This Flagged? (Stacked Alert Rows) -->
+        <div class="card-panel">
+          <div class="card-panel-header">
+            <div class="card-panel-title">
+              <span style="color: #ef4444;">🛡️</span>
+              <span>Why Was This Transaction Flagged? (Explainable AI)</span>
+            </div>
+            <span style="font-size: 0.75rem; color: #34d399;">VERIFIED AUDIT PROOF</span>
+          </div>
+
+          <div>
+            ${a.reasons.map(r => `
+              <div class="xai-reason-row warning">
+                <span class="xai-icon">⚠️</span>
+                <div>
+                  <div style="font-weight: 600; color: #fff;">${r}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Rule breakdown details -->
+          ${a.breakdowns && a.breakdowns.length > 0 ? `
+            <div style="margin-top: 1.5rem;">
+              <div style="font-size: 0.8rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px;">Triggered Rule Penalties</div>
+              <div style="display:flex; flex-direction: column; gap: 6px;">
+                ${a.breakdowns.map(b => `
+                  <div style="display:flex; justify-content:space-between; align-items:center; background:#111827; padding:8px 12px; border-radius:var(--radius-xs); border:1px solid #374151;">
+                    <span style="font-size:0.8rem; color:#d1d5db;">${b.desc}</span>
+                    <span style="font-size:0.8rem; font-weight:700; color:#f87171; font-family:var(--font-mono);">+${b.points} pts</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Right: Account Profile Snapshot (Normal vs Current Spending) -->
+        <div class="card-panel">
+          <div class="card-panel-header">
+            <div class="card-panel-title">
+              <span>👤</span>
+              <span>Account Profile Snapshot</span>
+            </div>
+            <span class="risk-badge risk-badge-low">${t.account_status}</span>
+          </div>
+
+          <div style="margin-bottom: 1.25rem;">
+            <div style="font-size: 1.1rem; font-weight: 700; color: #fff;">${t.holder_name}</div>
+            <div style="font-size: 0.8rem; color: #9ca3af; font-family: var(--font-mono);">Account ID: ${t.account_id} (${t.account_type})</div>
+          </div>
+
+          <!-- Spending comparison bar -->
+          <div style="background: #172033; padding: 1rem; border: 1px solid #374151; border-radius: var(--radius-xs); margin-bottom: 1.25rem;">
+            <div style="font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px;">
+              Spending Deviation Analysis
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+              <span style="color: #9ca3af;">Typical Range:</span>
+              <span style="font-weight: 600; color: #34d399;">${formatINR(normalMin)} – ${formatINR(normalMax)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px;">
+              <span style="color: #9ca3af;">Historical Average:</span>
+              <span style="font-weight: 600; color: #60a5fa;">${formatINR(t.avg_amount)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; border-top: 1px solid #374151; padding-top: 8px;">
+              <span style="color: #fca5a5; font-weight: 600;">Current Incursion:</span>
+              <span style="font-weight: 800; color: #ef4444; font-family: var(--font-mono);">${formatINR(t.amount)}</span>
+            </div>
+          </div>
+
+          <!-- Geolocation & Hardware Check -->
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; background:#111827; padding:8px 10px; border-radius:var(--radius-xs);">
+              <span style="color:#9ca3af;">Typical Home Location:</span>
+              <span style="color:#fff; font-weight:600;">${t.typical_location}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; background:#111827; padding:8px 10px; border-radius:var(--radius-xs);">
+              <span style="color:#9ca3af;">Current Ingestion Location:</span>
+              <span style="color:#f87171; font-weight:700;">${t.location}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; background:#111827; padding:8px 10px; border-radius:var(--radius-xs);">
+              <span style="color:#9ca3af;">Device Hardware:</span>
+              <span style="color:#fff; font-family:var(--font-mono); font-size:0.75rem;">${t.device_id} ${t.new_device ? '⚠️ (NEW)' : '✓ (KNOWN)'}</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = '<div class="card-panel" style="color:#ef4444; text-align:center;">Failed to load transaction data.</div>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadDetails);
+</script>
+{% endblock %}

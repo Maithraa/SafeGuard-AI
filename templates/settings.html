@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings & Risk Matrix Config - FraudGuard AI{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Rule Matrix &amp; Algorithmic Parameters</h1>
+      <p class="page-desc">Fine-tune deterministic point allocations, Isolation Forest contamination ratios, and autonomous enforcement ceilings.</p>
+    </div>
+
+    <button onclick="saveSettings()" class="btn btn-primary">
+      <span>💾</span>
+      <span>Save Calibration Profile</span>
+    </button>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+    
+    <!-- Left: Hybrid Engine Weighting -->
+    <div class="card-panel">
+      <div class="card-panel-header">
+        <div class="card-panel-title">
+          <span>⚖️</span>
+          <span>Hybrid Risk Formula Coefficients</span>
+        </div>
+        <span class="risk-badge risk-badge-low">ACTIVE RATIO</span>
+      </div>
+
+      <div style="background: #172033; padding: 1rem; border: 1px solid #374151; border-radius: var(--radius-xs); margin-bottom: 1.5rem;">
+        <div style="font-size: 0.8rem; color: #9ca3af; margin-bottom: 4px;">CURRENT MATHEMATICAL FORMULA</div>
+        <div style="font-size: 0.95rem; font-weight: 700; color: #60a5fa; font-family: var(--font-mono);">
+          Hybrid Score = 0.60 × Rule Score + 0.40 × ML Score
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.25rem;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <label class="form-label">Deterministic Rule Weight (60%)</label>
+          <span style="font-family:var(--font-mono); font-size:0.85rem; color:#fff;" id="ruleWeightVal">0.60</span>
+        </div>
+        <input type="range" min="0" max="1" step="0.05" value="0.6" class="form-input" id="ruleWeightSlider" oninput="updateWeights(this.value)">
+      </div>
+
+      <div style="margin-bottom: 1.25rem;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <label class="form-label">Isolation Forest ML Weight (40%)</label>
+          <span style="font-family:var(--font-mono); font-size:0.85rem; color:#fff;" id="mlWeightVal">0.40</span>
+        </div>
+        <input type="range" min="0" max="1" step="0.05" value="0.4" class="form-input" id="mlWeightSlider" disabled style="opacity: 0.6;">
+      </div>
+
+      <div style="font-size: 0.8rem; color: #9ca3af; line-height: 1.4;">
+        * Weights automatically normalize to 1.0 to preserve the standard 0–100 risk continuum.
+      </div>
+    </div>
+
+    <!-- Right: Threshold Boundaries -->
+    <div class="card-panel">
+      <div class="card-panel-header">
+        <div class="card-panel-title">
+          <span>🎯</span>
+          <span>Risk Classification Tiers</span>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#111827; padding:10px; border-radius:var(--radius-xs); border-left:4px solid var(--risk-low);">
+          <div>
+            <div style="font-weight:700; font-size:0.85rem;">LOW RISK (Green)</div>
+            <div style="font-size:0.75rem; color:#9ca3af;">Standard clearance, frictionless execution</div>
+          </div>
+          <span style="font-family:var(--font-mono); font-weight:700; color:#10b981;">0 – 30 pts</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#111827; padding:10px; border-radius:var(--radius-xs); border-left:4px solid var(--risk-medium);">
+          <div>
+            <div style="font-weight:700; font-size:0.85rem;">MEDIUM RISK (Yellow)</div>
+            <div style="font-size:0.75rem; color:#9ca3af;">Step-up OTP / Biometric challenge required</div>
+          </div>
+          <span style="font-family:var(--font-mono); font-weight:700; color:#f59e0b;">31 – 60 pts</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#111827; padding:10px; border-radius:var(--radius-xs); border-left:4px solid var(--risk-high);">
+          <div>
+            <div style="font-weight:700; font-size:0.85rem;">HIGH RISK (Orange)</div>
+            <div style="font-size:0.75rem; color:#9ca3af;">Manual Tier-2 SOC review queue</div>
+          </div>
+          <span style="font-family:var(--font-mono); font-weight:700; color:#f97316;">61 – 80 pts</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#111827; padding:10px; border-radius:var(--radius-xs); border-left:4px solid var(--risk-critical);">
+          <div>
+            <div style="font-weight:700; font-size:0.85rem;">CRITICAL THREAT (Red)</div>
+            <div style="font-size:0.75rem; color:#9ca3af;">Instant transaction block + Account quarantine</div>
+          </div>
+          <span style="font-family:var(--font-mono); font-weight:700; color:#dc2626;">81 – 100 pts</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Hard Point Scoring Parameters -->
+  <div class="card-panel" style="margin-top: 1.5rem;">
+    <div class="card-panel-header">
+      <div class="card-panel-title">
+        <span>⚙️</span>
+        <span>Deterministic Rule Point Penalties (Matrix Specification)</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+      <div style="background: #172033; padding: 12px; border: 1px solid #374151; border-radius: var(--radius-xs);">
+        <label class="form-label">Amount Surge (&gt;5x baseline)</label>
+        <input type="number" class="form-input" value="25" min="5" max="50">
+        <div style="font-size: 0.725rem; color: #9ca3af; margin-top: 4px;">Points added on multiple threshold violation</div>
+      </div>
+
+      <div style="background: #172033; padding: 12px; border: 1px solid #374151; border-radius: var(--radius-xs);">
+        <label class="form-label">Impossible Velocity (&gt;800 km/h)</label>
+        <input type="number" class="form-input" value="20" min="5" max="50">
+        <div style="font-size: 0.725rem; color: #9ca3af; margin-top: 4px;">Points added on physical velocity impossibility</div>
+      </div>
+
+      <div style="background: #172033; padding: 12px; border: 1px solid #374151; border-radius: var(--radius-xs);">
+        <label class="form-label">New Hardware Fingerprint</label>
+        <input type="number" class="form-input" value="20" min="5" max="50">
+        <div style="font-size: 0.725rem; color: #9ca3af; margin-top: 4px;">Points added for unverified device signature</div>
+      </div>
+
+      <div style="background: #172033; padding: 12px; border: 1px solid #374151; border-radius: var(--radius-xs);">
+        <label class="form-label">Nocturnal Window (12 AM–5 AM)</label>
+        <input type="number" class="form-input" value="15" min="5" max="50">
+        <div style="font-size: 0.725rem; color: #9ca3af; margin-top: 4px;">Points added during dormancy hours</div>
+      </div>
+
+      <div style="background: #172033; padding: 12px; border: 1px solid #374151; border-radius: var(--radius-xs);">
+        <label class="form-label">Rapid Burst Cadence (&gt;5 in 10m)</label>
+        <input type="number" class="form-input" value="20" min="5" max="50">
+        <div style="font-size: 0.725rem; color: #9ca3af; margin-top: 4px;">Points added on high transaction burst frequency</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateWeights(val) {
+  const ruleVal = parseFloat(val);
+  const mlVal = Math.round((1.0 - ruleVal) * 100) / 100;
+
+  document.getElementById('ruleWeightVal').textContent = ruleVal.toFixed(2);
+  document.getElementById('mlWeightVal').textContent = mlVal.toFixed(2);
+  document.getElementById('mlWeightSlider').value = mlVal;
+}
+
+function saveSettings() {
+  showNotification('Algorithmic weights and rule matrix successfully recalibrated.');
+}
+</script>
+{% endblock %}

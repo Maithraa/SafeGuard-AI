@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Alert Triage & Remediation - FraudGuard AI{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Active Alert Remediation Queue</h1>
+      <p class="page-desc">Automated incident queue requiring supervisory review, account freezing, or false-positive disposition.</p>
+    </div>
+  </div>
+
+  <div class="card-panel">
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Alert ID</th>
+            <th>Target Account / Holder</th>
+            <th>Amount Flagged</th>
+            <th>Location</th>
+            <th>Severity Score</th>
+            <th>Explainable Flag Reason</th>
+            <th>Disposition Status</th>
+            <th>Remediation Action</th>
+          </tr>
+        </thead>
+        <tbody id="alertsTableBody">
+          <tr><td colspan="8" style="text-align: center; padding: 2rem;">Loading alert queue...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadAlerts() {
+  try {
+    const res = await fetch('/api/alerts');
+    const data = await res.json();
+    const tbody = document.getElementById('alertsTableBody');
+
+    if (!data.alerts || data.alerts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2rem; color:#6b7280;">No active alerts. Zero critical anomalies detected.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '';
+    data.alerts.forEach(a => {
+      const tr = document.createElement('tr');
+      tr.id = `alertRow-${a.alert_id}`;
+      tr.className = a.risk_level === 'CRITICAL' ? 'risk-border-critical' : 'risk-border-high';
+
+      const isResolved = a.status.startsWith('Resolved');
+
+      tr.innerHTML = `
+        <td style="font-weight: 700; font-family: var(--font-mono); color: #fff;">ALT-${a.alert_id}</td>
+        <td>
+          <div style="font-weight: 600;">${a.holder_name}</div>
+          <div style="font-size: 0.75rem; color: #9ca3af; font-family: var(--font-mono);">${a.account_id}</div>
+        </td>
+        <td style="font-weight: 700; font-family: var(--font-mono); color: #fff;">${formatINR(a.amount)}</td>
+        <td>📍 ${a.location}</td>
+        <td>
+          <span class="risk-badge ${a.risk_level === 'CRITICAL' ? 'risk-badge-critical' : 'risk-badge-high'}">
+            ${a.risk_level} (${a.risk_score})
+          </span>
+        </td>
+        <td style="max-width: 250px; font-size: 0.775rem; color: #d1d5db;">${a.primary_reason}</td>
+        <td>
+          <span id="statusTag-${a.alert_id}" class="risk-badge ${isResolved ? 'risk-badge-low' : 'risk-badge-critical'}">
+            ${a.status}
+          </span>
+        </td>
+        <td>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button onclick="resolveAlert(${a.alert_id}, 'Freeze', this)" class="btn btn-danger btn-sm" ${isResolved ? 'disabled' : ''}>Freeze</button>
+            <button onclick="resolveAlert(${a.alert_id}, 'Limit', this)" class="btn btn-outline-amber btn-sm" ${isResolved ? 'disabled' : ''}>Limit</button>
+            <button onclick="resolveAlert(${a.alert_id}, 'Dismiss', this)" class="btn btn-secondary btn-sm" ${isResolved ? 'disabled' : ''}>Dismiss</button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function resolveAlert(alertId, action, btn) {
+  try {
+    const res = await fetch(`/api/alerts/${alertId}/action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      const statusTag = document.getElementById(`statusTag-${alertId}`);
+      if (statusTag) {
+        statusTag.textContent = `Resolved (${action})`;
+        statusTag.className = 'risk-badge risk-badge-low';
+      }
+
+      // Disable buttons in row
+      const row = document.getElementById(`alertRow-${alertId}`);
+      if (row) {
+        row.querySelectorAll('button').forEach(b => b.disabled = true);
+      }
+
+      showNotification(`Alert ALT-${alertId}: Action '${action}' successfully executed.`);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadAlerts);
+</script>
+{% endblock %}
